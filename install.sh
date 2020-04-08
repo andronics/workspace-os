@@ -1,9 +1,10 @@
 # import modules
-source './modules/disks'
+source './modules/bash.sh'
+source './modules/disks.sh'
 
 # force packages database refresh
-pause "update packages"
-pacman -Syy
+pause "package db update"
+pacman -Sy 
 
 # ================================================================================
 #  pre installations steps
@@ -15,7 +16,10 @@ pause "pre installation"
 loadkeys uk
 
 # update system clock
-timedatectl set-ntp true
+timedatectl set-ntp truemake/
+
+# install parted
+pacman -S --noconfirm parted
 
 # ================================================================================
 # partition disks
