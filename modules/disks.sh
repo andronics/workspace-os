@@ -13,4 +13,4 @@ function make_partition() {
 
 function free_disk_space() {
 	parted -s $1 unit MiB print free | grep 'Free Space' | tail -n 1 | awk '{ print $3 }' | sed -e 's/s$//g'
-}c
+}

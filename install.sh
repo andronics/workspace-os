@@ -29,9 +29,9 @@ pause "partition system disk"
 
 clear_partition /dev/sda
 parted -s /dev/sda mktable msdos
-parted -s -a optimal /dev/sda mkpart 1MB 101MB
-parted -s -a optimal /dev/sda mkpart 101MB 90%
-parted -s -a optimal /dev/sda mkpart 90% 100%
+parted -s -a optimal /dev/sda mkpart pri 1MB 101MB
+parted -s -a optimal /dev/sda mkpart pri 101MB 90%
+parted -s -a optimal /dev/sda mkpart pri 90% 100%
 mkfs.vfat -F32 /dev/sda1
 mkfs.btrfs /dev/sda2
 mkswap /dev/sda3
@@ -56,13 +56,11 @@ pause "partition storage disk"
 
 clear_partition /dev/sdb
 parted -s /dev/sdb mktable msdos
-parted -s -a optimal /dev/sdb mkpart 0% 100%
+parted -s -a optimal /dev/sdb mkpart pri 0% 100%
 mkfs.btrfs /dev/sdb1
 
-pause "mount storage partition"
+pause "create & mount storage subvolumes"
 mount /dev/sdb1 /mnt
-
-pause "create storage subvolumes & folders"
 btrfs subvolume create /mnt/@
 btrfs subvolume create /mnt/@/archive
 btrfs subvolume create /mnt/@/games
@@ -74,7 +72,7 @@ btrfs subvolume create /mnt/@/software
 btrfs subvolume create /mnt/@/vault
 btrfs subvolume create /mnt/@/virtual
 btrfs subvolume create /mnt/@/workspace
-umount /mnt/storage
+umount /mnt
 
 # ================================================================================
 # mount subvolumes
