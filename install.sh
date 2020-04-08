@@ -22,67 +22,67 @@ timedatectl set-ntp truemake/
 pacman -S --noconfirm parted
 
 # ================================================================================
-# partition disks
-# ================================================================================
-
-# clear drives
-pause "clear partitions"
-clear_partition /dev/sda
-clear_partition /dev/sdb
-
-# partition drives
-pause "create new partitions"
-make_partition /dev/sda 10240000 # boot - 100mb
-make_partition /dev/sda # root - freespace
-make_partition /dev/sda 51200000 # swap - 512mb
-make_partition /dev/sdb # storage - freespace
-
-# format partiitions
-pause "format partitions"
-mkfs.vfat -F32 /dev/sda1
-mkfs.btrfs /dev/sda2
-mkfs.btrfs /dev/sdb1
-
-# make swap disk
-pause "enable swap disk"
-mkswap /dev/sda3
-swapon /dev/sda3
-
-# ================================================================================
 # configure root drive
 # ================================================================================
 
-pause "mount root partitions"
+pause "partition system disk"
+
+clear_partition /dev/sda
+parted -s /dev/sda mktable msdos
+parted -s -a optimal /dev/sda mkpart 1MB 101MB
+parted -s -a optimal /dev/sda mkpart 101MB 90%
+parted -s -a optimal /dev/sda mkpart 90% 100%
+mkfs.vfat -F32 /dev/sda1
+mkfs.btrfs /dev/sda2
+mkswap /dev/sda3
+swapon /dev/sda3
+
+pause "create & mount system subvolumes"
 
 mount /dev/sda2 /mnt
-
-pause "create root subvolumes & folders"
 btrfs subvolume create /mnt/@
-btrfs subvolume create /mnt/@/{home,var}
-btrfs subvolume create /mnt/@/var/{cache}
-
-pause "remount root subvolume root"
+btrfs subvolume create /mnt/@/home
+btrfs subvolume create /mnt/@/var
+btrfs subvolume create /mnt/@/var/cache
+mkdir -p /mnt/boot
+mkdir -p /mnt/storage
 umount /mnt
-mount -o compress=zstd,noatime,nodiratime,ssd,subvol=@ /dev/sda2 /mnt
 
 # ================================================================================
 # configure storage drive
 # ================================================================================
 
+pause "partition storage disk"
+
+clear_partition /dev/sdb
+parted -s /dev/sdb mktable msdos
+parted -s -a optimal /dev/sdb mkpart 0% 100%
+mkfs.btrfs /dev/sdb1
+
 pause "mount storage partition"
-mkdir -p /mnt/storage
-mount /dev/sdb1 /mnt/storage
+mount /dev/sdb1 /mnt
 
 pause "create storage subvolumes & folders"
-btrfs subvolume create /mnt/storage/@
-btrfs subvolume create /mnt/storage/@/{archive,games,media,projects,resources,services,software,vault,virtual,workspace}
-
-pause "remount storage subvolume root"
+btrfs subvolume create /mnt/@
+btrfs subvolume create /mnt/@/archive
+btrfs subvolume create /mnt/@/games
+btrfs subvolume create /mnt/@/media
+btrfs subvolume create /mnt/@/projects
+btrfs subvolume create /mnt/@/resources
+btrfs subvolume create /mnt/@/services
+btrfs subvolume create /mnt/@/software
+btrfs subvolume create /mnt/@/vault
+btrfs subvolume create /mnt/@/virtual
+btrfs subvolume create /mnt/@/workspace
 umount /mnt/storage
-mount -o compress=zstd,noatime,nodiratime,ssd,subvol=@ /dev/sdb1 /mnt/storage
 
-# mount remaining volues
-pause "mount boot volume"
+# ================================================================================
+# mount subvolumes
+# ================================================================================
+
+pause "mount subvolumes boot partition"
+mount -o compress=zstd,noatime,nodiratime,ssd,subvol=@ /dev/sda2 /mnt
+mount -o compress=zstd,noatime,nodiratime,ssd,subvol=@ /dev/sdb1 /mnt/storage
 mount /dev/sda1 /mnt/boot
 
 # ================================================================================
