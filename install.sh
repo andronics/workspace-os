@@ -2,13 +2,14 @@
 source './modules/disks'
 
 # force packages database refresh
+pause "update packages"
 pacman -Syy
 
-#########################################################################
+# ================================================================================
+#  pre installations steps
+# ================================================================================
 
-## pre installations steps
-
-#########################################################################
+pause "pre installation"
 
 # load keyboard layout
 loadkeys uk
@@ -16,80 +17,75 @@ loadkeys uk
 # update system clock
 timedatectl set-ntp true
 
-#########################################################################
+# ================================================================================
+# partition disks
+# ================================================================================
 
-## partition disks
-
-#########################################################################
-
-# partition drives
+# clear drives
+pause "clear partitions"
 clear_partition /dev/sda
 clear_partition /dev/sdb
 
 # partition drives
+pause "create new partitions"
 make_partition /dev/sda 10240000 # boot - 100mb
 make_partition /dev/sda # root - freespace
 make_partition /dev/sda 51200000 # swap - 512mb
 make_partition /dev/sdb # storage - freespace
 
 # format partiitions
+pause "format partitions"
 mkfs.vfat -F32 /dev/sda1
 mkfs.btrfs /dev/sda2
 mkfs.btrfs /dev/sdb1
 
 # make swap disk
+pause "enable swap disk"
 mkswap /dev/sda3
 swapon /dev/sda3
 
-# mount root volume
+# ================================================================================
+# configure root drive
+# ================================================================================
+
+pause "mount root partitions"
+
 mount /dev/sda2 /mnt
-mount /dev/sdb1 /mnt/storage
 
-# create subvolumes
+pause "create root subvolumes & folders"
 btrfs subvolume create /mnt/@
-btrfs subvolume create /mnt/@{home,var,cache,docker}
+btrfs subvolume create /mnt/@/{home,var}
+btrfs subvolume create /mnt/@/var/{cache}
 
-btrfs subvolume create /mnt/storage/@
-btrfs subvolume create /mnt/storage/@{archive,media,projects,vault,workspace}
-
-# umount root volume
-umount /mnt/storage
+pause "remount root subvolume root"
 umount /mnt
-
-# mount root subvolumes
 mount -o compress=zstd,noatime,nodiratime,ssd,subvol=@ /dev/sda2 /mnt
 
-# creating mounting folders
-mkdir -p /mnt/{boot,home,var}
-mkdir -p /mnt/storage/{archive,media,projects,vault,workspace}
-mkdir -p /mnt/var/cache
-mkdir -p /mnt/var/lib/docker
+# ================================================================================
+# configure storage drive
+# ================================================================================
 
-# mount remaining volues
+pause "mount storage partition"
+mkdir -p /mnt/storage
+mount /dev/sdb1 /mnt/storage
 
-mount /dev/sda1 /mnt/boot
+pause "create storage subvolumes & folders"
+btrfs subvolume create /mnt/storage/@
+btrfs subvolume create /mnt/storage/@/{archive,games,media,projects,resources,services,software,vault,virtual,workspace}
 
-for i in home var cache docker
-do
-	mount -o compress=zstd,noatime,nodiratime,ssd,subvol=@$i /dev/sda2 /mnt/$i
-done
-
-mount -o compress=zstd,noatime,nodiratime,ssd,subvol=@home /dev/sda2 /mnt/home
-mount -o compress=zstd,noatime,nodiratime,ssd,subvol=@var /dev/sda2 /mnt/var
-mount -o compress=zstd,noatime,nodiratime,ssd,subvol=@cache /dev/sda2 /mnt/var/cache
-mount -o compress=zstd,noatime,nodiratime,ssd,subvol=@cache /dev/sda2 /mnt/var/lib/docker
+pause "remount storage subvolume root"
+umount /mnt/storage
 mount -o compress=zstd,noatime,nodiratime,ssd,subvol=@ /dev/sdb1 /mnt/storage
 
-for i in archive media projects vault workspace
-do
-	mount -o compress=zstd,noatime,nodiratime,ssd,subvol=@$i /dev/sda2 /mnt/storage/$i
-done
+# mount remaining volues
+pause "mount boot volume"
+mount /dev/sda1 /mnt/boot
 
-#########################################################################
+# ================================================================================
+# install operating system
+# ================================================================================
 
-## Install Operating System
-
-#########################################################################
+pause "install base os + packages"
 
 # pacstrap base os 
 pacstrap /mnt base base-devel
@@ -106,15 +102,17 @@ pacstrap /mnt awesome awesome-extra
 # other utilities
 pacstrap /mnt btrfs-progs manjaro-zsh-config networkmanager nano mkinitcpio sudo systemd-boot-manager vim
 
+pause "generate fstab"
+
 # generate & verify fstab
 fstabgen -U /mnt >> /mnt/etc/fstab
 cat /mnt/etc/fstab
 
-#########################################################################
+# ================================================================================
+# configure systems
+# ================================================================================
 
-## Configure Systems
-
-#########################################################################
+pause "configure system"
 
 # configure system 
 arch-chroot /mnt /bin/zsh
@@ -140,15 +138,17 @@ echo en_GB.UTF_8 > /etc/locale.conf
 echo en_GB.UTF_8 UTF-8 > /etc/locale.gen
 local-gen
 
+pause "setup ramdisk hooks"
+
 # add hooks to initial ramdisk - order is important
 export HOOKS="base udev autodetect modconf block btrfs filesystems keyboard fsck"
 mkinitcpio -p linux56
 
-#########################################################################
+# ================================================================================
+# third-party packages repositories
+# ================================================================================
 
-## Packages
-
-#########################################################################
+pause "install third party repos "
 
 # sublime text
 
