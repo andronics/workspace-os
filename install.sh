@@ -1,11 +1,8 @@
-sudo -i
-
-# force packages database refresh
-pacman -Syy
-
 # import modules
 source './modules/disks'
 
+# force packages database refresh
+pacman -Syy
 
 #########################################################################
 
