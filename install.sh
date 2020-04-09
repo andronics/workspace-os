@@ -1,22 +1,17 @@
-# import modules
-source './modules/bash.sh'
-source './modules/disks.sh'
+#!/usr/bin/bash
 
 # force packages database refresh
-pause "package db update"
 pacman -Sy 
 
 # ================================================================================
 #  pre installations steps
 # ================================================================================
 
-pause "pre installation"
-
 # load keyboard layout
 loadkeys uk
 
 # update system clock
-timedatectl set-ntp truemake/
+timedatectl set-ntp true
 
 # install parted
 pacman -S --noconfirm parted
@@ -25,137 +20,264 @@ pacman -S --noconfirm parted
 # configure root drive
 # ================================================================================
 
-pause "partition system disk"
+echo "partition system disk?"
+select ynx in "Yes" "No" "Exit"; do
 
-clear_partition /dev/sda
-parted -s /dev/sda mktable msdos
-parted -s -a optimal /dev/sda mkpart pri 1MB 101MB
-parted -s -a optimal /dev/sda mkpart pri 101MB 90%
-parted -s -a optimal /dev/sda mkpart pri 90% 100%
-mkfs.vfat -F32 /dev/sda1
-mkfs.btrfs /dev/sda2
-mkswap /dev/sda3
-swapon /dev/sda3
+	case $ynx in
+		Exit )
+			exit
+			;;
+		No )
+			break
+			;;
+		Yes )
+			clear_partition /dev/sda
+			parted -s /dev/sda mktable msdos
+			parted -s -a optimal /dev/sda mkpart pri 1MB 101MB
+			parted -s -a optimal /dev/sda mkpart pri 101MB 90%
+			parted -s -a optimal /dev/sda mkpart pri 90% 100%
+			mkfs.vfat -F32 /dev/sda1
+			mkfs.btrfs /dev/sda2
+			mkswap /dev/sda3
+			swapon /dev/sda3
+			break
+			;;
+	esac
 
-pause "create & mount system subvolumes"
+done
 
-mount /dev/sda2 /mnt
-btrfs subvolume create /mnt/@
-btrfs subvolume create /mnt/@/home
-btrfs subvolume create /mnt/@/var
-btrfs subvolume create /mnt/@/var/cache
-mkdir -p /mnt/@/boot
-mkdir -p /mnt/@/storage
-umount /mnt
+echo "create system subvolumes?"
+select ynx in "Yes" "No" "Exit"; do
+
+	case $ynx in
+		Exit )
+			exit
+			;;
+		No )
+			break
+			;;
+		Yes )
+			mount /dev/sda2 /mnt
+			btrfs subvolume create /mnt/@
+			btrfs subvolume create /mnt/@/home
+			btrfs subvolume create /mnt/@/var
+			btrfs subvolume create /mnt/@/var/cache
+			mkdir -p /mnt/@/boot
+			mkdir -p /mnt/@/storage
+			umount /mnt
+			break
+			;;
+	esac
+
+done
 
 # ================================================================================
 # configure storage drive
 # ================================================================================
 
-pause "partition storage disk"
+echo "partition storage disk?"
+select ynx in "Yes" "No" "Exit"; do
 
-clear_partition /dev/sdb
-parted -s /dev/sdb mktable msdos
-parted -s -a optimal /dev/sdb mkpart pri 0% 100%
-mkfs.btrfs /dev/sdb1
+	case $ynx in
+		Exit )
+			exit
+			;;
+		No )
+			break
+			;;
+		Yes )
+			clear_partition /dev/sdb
+			parted -s /dev/sdb mktable msdos
+			parted -s -a optimal /dev/sdb mkpart pri 0% 100%
+			mkfs.btrfs /dev/sdb1
+			break
+			;;
+	esac
 
-pause "create & mount storage subvolumes"
-mount /dev/sdb1 /mnt
-btrfs subvolume create /mnt/@
-btrfs subvolume create /mnt/@/archive
-btrfs subvolume create /mnt/@/games
-btrfs subvolume create /mnt/@/media
-btrfs subvolume create /mnt/@/projects
-btrfs subvolume create /mnt/@/resources
-btrfs subvolume create /mnt/@/services
-btrfs subvolume create /mnt/@/software
-btrfs subvolume create /mnt/@/vault
-btrfs subvolume create /mnt/@/virtual
-btrfs subvolume create /mnt/@/workspace
-umount /mnt
+done
+
+echo "create storage subvolumes?"
+select ynx in "Yes" "No" "Exit"; do
+
+	case $ynx in
+		Exit )
+			exit
+			;;
+		No )
+			break
+			;;
+		Yes )
+			mount /dev/sdb1 /mnt
+			btrfs subvolume create /mnt/@
+			btrfs subvolume create /mnt/@/archive
+			btrfs subvolume create /mnt/@/games
+			btrfs subvolume create /mnt/@/media
+			btrfs subvolume create /mnt/@/projects
+			btrfs subvolume create /mnt/@/resources
+			btrfs subvolume create /mnt/@/services
+			btrfs subvolume create /mnt/@/software
+			btrfs subvolume create /mnt/@/vault
+			btrfs subvolume create /mnt/@/virtual
+			btrfs subvolume create /mnt/@/workspace
+			umount /mnt
+			break
+			;;
+	esac
+
+done
 
 # ================================================================================
 # mount subvolumes
 # ================================================================================
 
-pause "mount subvolumes boot partition"
-mount -o compress=zstd,noatime,nodiratime,ssd,subvol=@ /dev/sda2 /mnt
-mount -o compress=zstd,noatime,nodiratime,ssd,subvol=@ /dev/sdb1 /mnt/storage
-mount /dev/sda1 /mnt/boot
+echo "mount subvolumes?"
+select ynx in "Yes" "No" "Exit"; do
+
+	case $ynx in
+		Exit )
+			exit
+			;;
+		No )
+			break
+			;;
+		Yes )
+			mount -o compress=zstd,noatime,nodiratime,ssd,subvol=@ /dev/sda2 /mnt
+			mount -o compress=zstd,noatime,nodiratime,ssd,subvol=@ /dev/sdb1 /mnt/storage
+			mount /dev/sda1 /mnt/boot
+			break
+			;;
+	esac
+
+done
 
 # ================================================================================
 # install operating system
 # ================================================================================
 
-pause "install base os + packages"
+echo "basestrap operating system?"
+select ynx in "Yes" "No" "Exit"; do
 
-# pacstrap base os 
-pacstrap /mnt base base-devel
+	case $ynx in
+		Exit )
+			exit
+			;;
+		No )
+			break
+			;;
+		Yes )
+			# pacstrap base os 
+			basestrap /mnt base base-devel
+			# kernel + firmware
+			basestrap /mnt intel-ucode linux56 linux56-firmware
+			# display manager
+			basestrap /mnt lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings
+			# windows manager
+			basestrap /mnt awesome awesome-extra
+			# other utilities
+			basestrap /mnt btrfs-progs manjaro-zsh-config networkmanager nano mkinitcpio sudo systemd-boot-manager vim
+			break
+			;;
+	esac
 
-# kernel + firmware
-pacstrap /mnt intel-ucode linux56 linux56-firmware
+done
 
-# display manager
-pacstrap /mnt lightdm lightdm-gtk-greeter lightdm-gtk-greeter-settings
+echo "generate fstab?"
+select ynx in "Yes" "No" "Exit"; do
 
-# windows manager
-pacstrap /mnt awesome awesome-extra
+	case $ynx in
+		Exit )
+			exit
+			;;
+		No )
+			break
+			;;
+		Yes )
+			fstabgen -U /mnt >> /mnt/etc/fstab
+			cat /mnt/etc/fstab
+			break
+			;;
+	esac
 
-# other utilities
-pacstrap /mnt btrfs-progs manjaro-zsh-config networkmanager nano mkinitcpio sudo systemd-boot-manager vim
-
-pause "generate fstab"
-
-# generate & verify fstab
-fstabgen -U /mnt >> /mnt/etc/fstab
-cat /mnt/etc/fstab
+done
 
 # ================================================================================
 # configure systems
 # ================================================================================
 
-pause "configure system"
-
 # configure system 
-arch-chroot /mnt /bin/zsh
+manjaro-chroot /mnt /bin/bash
 
-# set hostname
-echo laptop > /etc/hostname
+echo "configure system?"
+select ynx in "Yes" "No" "Exit"; do
 
-# change default shell
-chsh -s /bin/zsh
+	case $ynx in
+		Exit )
+			exit
+			;;
+		No )
+			break
+			;;
+		Yes )
+			# set hostname
+			printf  "%s" andronics-pc > /etc/hostname
+			# update hosts file
+			printf "%s\t%s" "127.0.1.1" "andronics-pc" > /etc/hosts
+			# set systems administrators
+			printf "%wheel ALL=(ALL) ALL" > /etc/sudeors
+			# change default shell
+			chsh -s /bin/zsh
+			# set timezone & update rtc
+			ln -sf /usr/share/zoneinfo/Europe/London /etc/localtime
+			# clock
+			hwclock --systohc --utc
+			# enable network mamanger
+			systemctl enable networkmanager
+			# enable time syncronization
+			systemctl enable systemd-timesyncd
+			# locals
+			echo en_GB.UTF_8 > /etc/locale.conf
+			echo en_GB.UTF_8 UTF-8 > /etc/locale.gen
+			local-gen
+			break
+			;;
+	esac
 
-# set timezone & update rtc
-ln -sf /usr/share/zoneinfo/Europe/London /etc/localtime
-hwclock --systohc
+done
 
-# enable network mamanger
-systemctl enable networkmanager
+echo "configure bootloader?"
+select ynx in "Yes" "No" "Exit"; do
 
-# enable ntp client
-systemctl enable systemd-timesyncd
+	case $ynx in
+		Exit )
+			exit
+			;;
+		No )
+			break
+			;;
+		Yes )
+			# add hooks to initial ramdisk - order is important
+			export HOOKS="base udev autodetect modconf block btrfs filesystems keyboard fsck"
+			# initramfs
+			mkinitcpio -p linux56
+			# grub for efi system
+			grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Manjaro
+			# grub configuration
+			grub-mkconfig -o /boot/grub/grub.cfg
+			break
+			;;
+	esac
 
-# locals
-echo en_GB.UTF_8 > /etc/locale.conf
-echo en_GB.UTF_8 UTF-8 > /etc/locale.gen
-local-gen
+done
 
-pause "setup ramdisk hooks"
-
-# add hooks to initial ramdisk - order is important
-export HOOKS="base udev autodetect modconf block btrfs filesystems keyboard fsck"
-mkinitcpio -p linux56
-
+exit
 # ================================================================================
 # third-party packages repositories
 # ================================================================================
 
-pause "install third party repos "
-
 # sublime text
 
-curl -O https://download.sublimetext.com/sublimehq-pub.gpg
-pacman-key --add sublimehq-pub.gpg
-pacman-key --lsign-key 8A8F901A
-rm sublimehq-pub.gpg
-echo -e "\n[sublime-text]\nServer = https://download.sublimetext.com/arch/stable/x86_64" | tee -a /etc/pacman.conf
+# curl -O https://download.sublimetext.com/sublimehq-pub.gpg
+# pacman-key --add sublimehq-pub.gpg
+# pacman-key --lsign-key 8A8F901A
+# rm sublimehq-pub.gpg
+# echo -e "\n[sublime-text]\nServer = https://download.sublimetext.com/arch/stable/x86_64" | tee -a /etc/pacman.conf
