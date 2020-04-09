@@ -31,7 +31,7 @@ select ynx in "Yes" "No" "Exit"; do
 			break
 			;;
 		Yes )
-			clear_partition /dev/sda
+			dd if=/dev/urandom of=/dev/sda bs=1M count=100
 			parted -s /dev/sda mktable msdos
 			parted -s -a optimal /dev/sda mkpart pri 1MB 101MB
 			parted -s -a optimal /dev/sda mkpart pri 101MB 90%
@@ -86,7 +86,7 @@ select ynx in "Yes" "No" "Exit"; do
 			break
 			;;
 		Yes )
-			clear_partition /dev/sdb
+			dd if=/dev/urandom of=/dev/sdb bs=1M count=100
 			parted -s /dev/sdb mktable msdos
 			parted -s -a optimal /dev/sdb mkpart pri 0% 100%
 			mkfs.btrfs /dev/sdb1
