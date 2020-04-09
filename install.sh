@@ -44,8 +44,8 @@ btrfs subvolume create /mnt/@
 btrfs subvolume create /mnt/@/home
 btrfs subvolume create /mnt/@/var
 btrfs subvolume create /mnt/@/var/cache
-mkdir -p /mnt/boot
-mkdir -p /mnt/storage
+mkdir -p /mnt/@/boot
+mkdir -p /mnt/@/storage
 umount /mnt
 
 # ================================================================================
